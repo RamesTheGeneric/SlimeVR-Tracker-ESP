@@ -4,6 +4,7 @@
 #include <Arduino.h>
 
 #include "Level.h"
+#include "LogBuffer.h"
 #include "debug.h"
 
 namespace SlimeVR::Logging {
@@ -79,12 +80,20 @@ private:
 			strcat(buf, m_Tag);
 		}
 
-		Serial.printf("[%-5s] [%s] %s", levelToString(level), buf, str);
+		// Build array log message
+		char header[256];
+		snprintf(header, sizeof(header), "[%-5s] [%s] %s", levelToString(level), buf, str);
 
+		// For arrays, we'll output directly to avoid excessive buffering
+		// But for critical levels, flush first
+		if (level >= ERROR) {
+			LogBuffer::getInstance().flushAll();
+		}
+
+		Serial.print(header);
 		for (size_t i = 0; i < size; i++) {
 			Serial.print(array[i]);
 		}
-
 		Serial.println();
 	}
 

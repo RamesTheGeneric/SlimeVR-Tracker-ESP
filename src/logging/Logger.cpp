@@ -63,6 +63,23 @@ void Logger::log(Level level, const char* format, va_list args) const {
 		strcat(buf, m_Tag);
 	}
 
-	Serial.printf("[%-5s] [%s] %s\n", levelToString(level), buf, buffer);
+	// Format complete log message
+	char fullMessage[384];  // Enough for header + message
+	snprintf(fullMessage, sizeof(fullMessage), "[%-5s] [%s] %s\n", levelToString(level), buf, buffer);
+
+	// Add to buffer or write directly for critical messages
+	if (level >= ERROR) {
+		// Critical messages: write immediately and flush buffer
+		LogBuffer::getInstance().flushAll();
+		Serial.print(fullMessage);
+	} else {
+		// Normal messages: add to buffer
+		if (!LogBuffer::getInstance().addLog(fullMessage)) {
+			// Buffer full, try to make space
+			LogBuffer::getInstance().processCycle();
+			// Try again
+			LogBuffer::getInstance().addLog(fullMessage);
+		}
+	}
 }
 }  // namespace SlimeVR::Logging

@@ -159,6 +159,9 @@ void loop() {
 	OTA::otaUpdate();
 	networkManager.update();
 
+	// Process buffered logs
+	SlimeVR::Logging::LogBuffer::getInstance().processCycle();
+
 #if DEBUG_MEASURE_SENSOR_TIME_TAKEN
 	sensorMeasurer.before();
 #endif
