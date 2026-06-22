@@ -59,6 +59,33 @@ BatteryMonitor battery;
 
 SlimeVR::ResetCounter resetCounter;
 
+#ifdef USE_ESPNOW_COMMUNICATION
+// Poll the BOOT/FLASH button (active-low). Broadcasts a pairing request once the
+// button has been held continuously for the hold time, then waits for release
+// before it can fire again. Mirrors the receiver's 2-second long-press.
+void checkPairingButton()
+{
+    static constexpr unsigned long holdMillis = 2000;  // 2-second hold
+    static bool pressed = false;
+    static bool fired = false;
+    static unsigned long pressStart = 0;
+    unsigned long now = millis();
+    if (digitalRead(PIN_BOOT_BUTTON) == LOW) {  // active-low: button down
+        if (!pressed) {
+            pressed = true;
+            fired = false;
+            pressStart = now;
+        } else if (!fired && now - pressStart >= holdMillis) {
+            fired = true;
+            logger.info("Pairing button held, broadcasting pairing request");
+            espnowConnection.broadcastPairingRequest();
+        }
+    } else {
+        pressed = false;  // released
+    }
+}
+#endif
+
 void setup()
 {
     Serial.begin(serialBaudRate);
@@ -123,6 +150,7 @@ void setup()
     OTA::otaSetup(otaPassword);
 #else
 	espnowConnection.setup();
+	pinMode(PIN_BOOT_BUTTON, INPUT_PULLUP);
 #endif
     battery.Setup();
 
@@ -138,7 +166,9 @@ void loop()
     globalTimer.tick();
     SerialCommands::update();
 	resetCounter.update();
-#ifndef USE_ESPNOW_COMMUNICATION
+#ifdef USE_ESPNOW_COMMUNICATION
+    checkPairingButton();
+#else
     OTA::otaUpdate();
     networkManager.update();
 #endif

@@ -209,3 +209,10 @@ IMU_DESC_ENTRY(IMU_BMP160, PRIMARY_IMU_ADDRESS_ONE, IMU_ROTATION, PIN_IMU_SCL, P
     #define BATTERY_SHIELD_R2 100
   #endif
 #endif
+
+// Physical pairing button. GPIO0 is the BOOT/FLASH button on ESP8266 & ESP32.
+// Boards that reuse GPIO0 for I2C/INT (e.g. BOARD_ESP01, BOARD_WEMOSWROOM02)
+// must override this before this point.
+#ifndef PIN_BOOT_BUTTON
+#define PIN_BOOT_BUTTON 0
+#endif

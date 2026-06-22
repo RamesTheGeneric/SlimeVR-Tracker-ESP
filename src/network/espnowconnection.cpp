@@ -99,6 +99,8 @@ void ESPNowConnection::broadcastPairingRequest() {
         m_Logger.fatal("Couldn't send pairing message!");
         return;
     }
+    m_Logger.info("Broadcasting pairing request...");
+    ledManager.pattern(100, 100, 3);  // strobe a few times = "pairing"
 }
 
 void ESPNowConnection::sendFusionPacket(uint8_t sensorId, Quat fusedQuat, Vector3 accel) {
@@ -121,7 +123,7 @@ void ESPNowConnection::sendFusionPacket(uint8_t sensorId, Quat fusedQuat, Vector
     memcpy(&message.packet.fullSizeFusion.quat, endBuffer, sizeof(endBuffer));
 
     if (esp_now_send(
-                broadcastMacAddress,
+                dongleMacAddress,
                 reinterpret_cast<uint8_t *>(&message),
                 sizeof(message)
             ) != ESP_OK) {
@@ -154,7 +156,7 @@ bool ESPNowConnection::sendDeviceInfoPacket(Sensor* sensor) {
 	message.packet.deviceInfo = packet;
 
     if (esp_now_send(
-                broadcastMacAddress,
+                dongleMacAddress,
                 reinterpret_cast<uint8_t *>(&message),
                 sizeof(message)
             ) != ESP_OK) {
